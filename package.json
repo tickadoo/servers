@@ -23,5 +23,8 @@
     "@modelcontextprotocol/server-memory": "*",
     "@modelcontextprotocol/server-filesystem": "*",
     "@modelcontextprotocol/server-sequential-thinking": "*"
+  },
+  "devDependencies": {
+    "vite": "6.4.3"
   }
 }
