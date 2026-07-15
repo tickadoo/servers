@@ -109,6 +109,39 @@ def test_git_add_specific_files(test_repository):
     assert "file2.txt" not in staged_files
     assert result == "Files staged successfully"
 
+
+def test_git_add_rejects_parent_path_outside_repository(test_repository):
+    outside_file = Path(test_repository.working_dir).parent / "outside.txt"
+    outside_file.write_text("must not be staged")
+
+    with pytest.raises(git.GitCommandError):
+        git_add(test_repository, ["../outside.txt"])
+
+    staged_files = [item.a_path for item in test_repository.index.diff("HEAD")]
+    assert "outside.txt" not in staged_files
+
+
+def test_git_add_rejects_absolute_path_outside_repository(test_repository):
+    outside_file = Path(test_repository.working_dir).parent / "absolute-outside.txt"
+    outside_file.write_text("must not be staged")
+
+    with pytest.raises(git.GitCommandError):
+        git_add(test_repository, [str(outside_file)])
+
+    staged_files = [item.a_path for item in test_repository.index.diff("HEAD")]
+    assert "absolute-outside.txt" not in staged_files
+
+
+def test_git_add_treats_dash_prefixed_filename_as_a_path(test_repository):
+    file_path = Path(test_repository.working_dir) / "-flag.txt"
+    file_path.write_text("safe filename")
+
+    result = git_add(test_repository, ["-flag.txt"])
+
+    staged_files = [item.a_path for item in test_repository.index.diff("HEAD")]
+    assert "-flag.txt" in staged_files
+    assert result == "Files staged successfully"
+
 def test_git_status(test_repository):
     result = git_status(test_repository)
 
