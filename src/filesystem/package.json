@@ -12,6 +12,9 @@
     "url": "https://github.com/modelcontextprotocol/servers.git"
   },
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "bin": {
     "mcp-server-filesystem": "dist/index.js"
   },
@@ -27,7 +30,6 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "diff": "^8.0.3",
-    "glob": "^13.0.6",
     "minimatch": "^10.0.1",
     "zod-to-json-schema": "^3.23.5"
   },

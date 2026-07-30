@@ -12,6 +12,9 @@
     "url": "https://github.com/modelcontextprotocol/servers.git"
   },
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "bin": {
     "mcp-server-sequential-thinking": "dist/index.js"
   },
