@@ -146,6 +146,13 @@ def test_git_add_rejects_symlink_that_resolves_outside_repository(test_repositor
     assert "linked.txt" not in staged_files
 
 
+def test_git_add_rejects_bare_repository(tmp_path: Path):
+    bare_repo = git.Repo.init(tmp_path / "bare.git", bare=True)
+
+    with pytest.raises(ValueError, match="bare repository"):
+        git_add(bare_repo, ["."])
+
+
 def test_git_add_treats_dash_prefixed_filename_as_a_path(test_repository):
     file_path = Path(test_repository.working_dir) / "-flag.txt"
     file_path.write_text("safe filename")

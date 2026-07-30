@@ -130,6 +130,11 @@ def git_commit(repo: git.Repo, message: str) -> str:
     return f"Changes committed successfully with hash {commit.hexsha}"
 
 def git_add(repo: git.Repo, files: list[str]) -> str:
+    if repo.bare:
+        raise ValueError("Cannot stage files in a bare repository")
+    working_dir = repo.working_dir
+    if working_dir is None:
+        raise ValueError("Cannot stage files in a bare repository")
     if files == ["."]:
         repo.git.add(".")
     else:
@@ -137,7 +142,7 @@ def git_add(repo: git.Repo, files: list[str]) -> str:
         # rejects paths outside its worktree, but resolving here also blocks
         # traversal through absolute paths and symlinks before any staging
         # command runs (CVE-2026-27735).
-        repo_root = Path(repo.working_dir).resolve()
+        repo_root = Path(working_dir).resolve()
         for file in files:
             try:
                 resolved = (repo_root / file).resolve()
