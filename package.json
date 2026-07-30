@@ -24,6 +24,11 @@
     "@modelcontextprotocol/server-filesystem": "*",
     "@modelcontextprotocol/server-sequential-thinking": "*"
   },
+  "overrides": {
+    "@modelcontextprotocol/sdk": {
+      "@hono/node-server": "2.0.12"
+    }
+  },
   "devDependencies": {
     "vite": "6.4.3"
   }
