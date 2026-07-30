@@ -16,6 +16,7 @@ from mcp_server_git.server import (
     git_create_branch,
     git_show,
     validate_repo_path,
+    GitTools,
 )
 import shutil
 
@@ -114,7 +115,7 @@ def test_git_add_rejects_parent_path_outside_repository(test_repository):
     outside_file = Path(test_repository.working_dir).parent / "outside.txt"
     outside_file.write_text("must not be staged")
 
-    with pytest.raises(git.GitCommandError):
+    with pytest.raises(ValueError, match="outside the repository"):
         git_add(test_repository, ["../outside.txt"])
 
     staged_files = [item.a_path for item in test_repository.index.diff("HEAD")]
@@ -125,11 +126,24 @@ def test_git_add_rejects_absolute_path_outside_repository(test_repository):
     outside_file = Path(test_repository.working_dir).parent / "absolute-outside.txt"
     outside_file.write_text("must not be staged")
 
-    with pytest.raises(git.GitCommandError):
+    with pytest.raises(ValueError, match="outside the repository"):
         git_add(test_repository, [str(outside_file)])
 
     staged_files = [item.a_path for item in test_repository.index.diff("HEAD")]
     assert "absolute-outside.txt" not in staged_files
+
+
+def test_git_add_rejects_symlink_that_resolves_outside_repository(test_repository):
+    outside_file = Path(test_repository.working_dir).parent / "symlink-outside.txt"
+    outside_file.write_text("must not be staged")
+    symlink_path = Path(test_repository.working_dir) / "linked.txt"
+    symlink_path.symlink_to(outside_file)
+
+    with pytest.raises(ValueError, match="outside the repository"):
+        git_add(test_repository, ["linked.txt"])
+
+    staged_files = [item.a_path for item in test_repository.index.diff("HEAD")]
+    assert "linked.txt" not in staged_files
 
 
 def test_git_add_treats_dash_prefixed_filename_as_a_path(test_repository):
@@ -141,6 +155,11 @@ def test_git_add_treats_dash_prefixed_filename_as_a_path(test_repository):
     staged_files = [item.a_path for item in test_repository.index.diff("HEAD")]
     assert "-flag.txt" in staged_files
     assert result == "Files staged successfully"
+
+
+def test_git_init_is_not_exposed():
+    assert "git_init" not in {tool.value for tool in GitTools}
+
 
 def test_git_status(test_repository):
     result = git_status(test_repository)

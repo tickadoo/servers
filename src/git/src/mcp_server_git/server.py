@@ -133,6 +133,19 @@ def git_add(repo: git.Repo, files: list[str]) -> str:
     if files == ["."]:
         repo.git.add(".")
     else:
+        # Validate every requested path before invoking git. Git normally
+        # rejects paths outside its worktree, but resolving here also blocks
+        # traversal through absolute paths and symlinks before any staging
+        # command runs (CVE-2026-27735).
+        repo_root = Path(repo.working_dir).resolve()
+        for file in files:
+            try:
+                resolved = (repo_root / file).resolve()
+                resolved.relative_to(repo_root)
+            except (OSError, RuntimeError, ValueError) as exc:
+                raise ValueError(
+                    f"Path '{file}' is outside the repository '{repo_root}'"
+                ) from exc
         # Use '--' to prevent files starting with '-' from being interpreted as options
         repo.git.add("--", *files)
     return "Files staged successfully"
