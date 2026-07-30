@@ -130,9 +130,27 @@ def git_commit(repo: git.Repo, message: str) -> str:
     return f"Changes committed successfully with hash {commit.hexsha}"
 
 def git_add(repo: git.Repo, files: list[str]) -> str:
+    if repo.bare:
+        raise ValueError("Cannot stage files in a bare repository")
+    working_dir = repo.working_dir
+    if working_dir is None:
+        raise ValueError("Cannot stage files in a bare repository")
     if files == ["."]:
         repo.git.add(".")
     else:
+        # Validate every requested path before invoking git. Git normally
+        # rejects paths outside its worktree, but resolving here also blocks
+        # traversal through absolute paths and symlinks before any staging
+        # command runs (CVE-2026-27735).
+        repo_root = Path(working_dir).resolve()
+        for file in files:
+            try:
+                resolved = (repo_root / file).resolve()
+                resolved.relative_to(repo_root)
+            except (OSError, RuntimeError, ValueError) as exc:
+                raise ValueError(
+                    f"Path '{file}' is outside the repository '{repo_root}'"
+                ) from exc
         # Use '--' to prevent files starting with '-' from being interpreted as options
         repo.git.add("--", *files)
     return "Files staged successfully"
